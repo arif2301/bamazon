@@ -23,18 +23,14 @@ connection.connect(function(err) {
   });
 
 function showProducts() {
-console.log("Here are the watches you can buy...\n");
-connection.query("SELECT * FROM products", function(err, res) {
-    if (err) throw err;
-    // Log all results of the SELECT statement
+    console.log("Here are the watches you can buy...\n");
+    connection.query("SELECT * FROM products", function(err, res) {
+        if (err) throw err;
+        // Log all results of the SELECT statement
         for (var i = 0; i < res.length; i++) {
             console.log ("ID: " + res[i].item_id + ", Name: " + res[i].product_name + ", Type: " +res[i].department_name + ", Price: $" + res[i].price)
-    
         }
-
-});
-
-
+    });
 }
 
 
@@ -68,7 +64,7 @@ function shop() {
     inquirer
         .prompt([
         {
-            name: "choice",
+            name: "id",
             type: "input",
             message: "Please enter the ID of the watch you want to buy."
         },
@@ -81,10 +77,53 @@ function shop() {
         ])
         
         .then(function(answer) {
-       
-            console.log("good choice");
-            // re-prompt the user for if they want to bid or post
-            start();
+            var chosenItem;
+            for (var i = 0; i < results.length; i++) {
+              if (results[i].item_id === parseInt(answer.id)) {
+                chosenItem = results[i];
+
+                console.log ( " chosen item " + chosenItem )
+              }
+            }
+            // determine if bid was high enough
+            if (chosenItem.stock_quantity >= parseInt(answer.amount) ) {
+                var watchesOrdered = parseInt(answer.amount);
+                var remaining = chosenItem.stock_quantity - watchesOrdered;
+                
+                console.log("remaining   " + remaining)
+
+                connection.query(
+                "UPDATE products SET ? WHERE ?",
+                [
+                    {
+                    stock_quantity: remaining
+                    },
+                    {
+                    item_id: chosenItem.item_id
+                    }
+                ],
+                function(error) {
+                    if (error) throw err;                   
+                },
+                );
+                var totalPrice = chosenItem.price * watchesOrdered;
+                console.log ("your order has gone through successfully" );
+                console.log ("your total is : $"+ totalPrice);
+
+                connection.query("SELECT * FROM products", function(err, res) {
+                    if (err) throw err;
+                    for (var i = 0; i < res.length; i++) {
+                        console.log ("ID: " + res[i].item_id + ", Name: " + res[i].product_name + ", remaing: " + res[i].stock_quantity)
+                    }
+                })
+                start();
+                
+            }
+            else {
+                // bid wasn't high enough, so apologize and start over
+                console.log("Insufficient quantity!");
+                start();
+            }
         })          
     });
 }  
