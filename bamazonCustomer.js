@@ -1,24 +1,26 @@
+
+require("dotenv").config();
 var mysql = require("mysql");
 var inquirer = require("inquirer");
+var keys = require("./key.js");
+var fs = require("fs");
 
+
+console.log (keys)
 var connection = mysql.createConnection({
   host: "localhost",
-
-  // Your port; if not 3306
   port: 3306,
-
-  // Your username
   user: "root",
-
-  // do .gitignore for this prior submitting
-  password: "tarifA1+",
+// used gitignore and .env to hide my user password
+//  password: keys.password,
+  password: "",
   database: "bamazonDB"
 });
 
 connection.connect(function(err) {
     if (err) throw err;
-    console.log("connected as id " + connection.threadId + "\n");
-    //showProducts();
+    // to ensure connection is completed, take the // out of the next line of code
+    // console.log("connected as id " + connection.threadId + "\n");
     start();
   });
 
@@ -26,17 +28,15 @@ function showProducts() {
     console.log("Here are the watches you can buy...\n");
     connection.query("SELECT * FROM products", function(err, res) {
         if (err) throw err;
-        // Log all results of the SELECT statement
+        // this function displays the products available to purchase
         for (var i = 0; i < res.length; i++) {
             console.log ("ID: " + res[i].item_id + ", Name: " + res[i].product_name + ", Type: " +res[i].department_name + ", Price: $" + res[i].price)
         }
     });
 }
 
-
-
 function start() {
-    
+    // this is the main function working as the skeleton of the application
     inquirer
       .prompt({
         name: "buy",
@@ -45,7 +45,7 @@ function start() {
         choices: ["BUY", "EXIT"]
       })
       .then(function(answer) {
-        // based on their answer, either call the bid or the post functions
+        // based on their answer, exit or buy
         if (answer.buy === "BUY") {
             showProducts();
             shop();
@@ -57,7 +57,7 @@ function start() {
   }
 
 function shop() {
-// prompt for info about the item being put up for auction
+// this function checks inventory and processes the purchase
     connection.query("SELECT * FROM products", function(err, results) {
     if (err) throw err;
   
@@ -71,7 +71,6 @@ function shop() {
         {
             name: "amount",
             type: "input",
-            //message: "How many " + answer.id + "s do you want to buy?"
             message: "How many of these watches do you want to buy?"
         },   
         ])
@@ -79,19 +78,16 @@ function shop() {
         .then(function(answer) {
             var chosenItem;
             for (var i = 0; i < results.length; i++) {
+                //find the product chosen
               if (results[i].item_id === parseInt(answer.id)) {
                 chosenItem = results[i];
-
-                console.log ( " chosen item " + chosenItem )
               }
             }
-            // determine if bid was high enough
+            // determine if we have enough stock
             if (chosenItem.stock_quantity >= parseInt(answer.amount) ) {
                 var watchesOrdered = parseInt(answer.amount);
-                var remaining = chosenItem.stock_quantity - watchesOrdered;
-                
-                console.log("remaining   " + remaining)
-
+                var remaining = chosenItem.stock_quantity - watchesOrdered;     
+                // updates the inventory
                 connection.query(
                 "UPDATE products SET ? WHERE ?",
                 [
@@ -106,21 +102,15 @@ function shop() {
                     if (error) throw err;                   
                 },
                 );
+                // to confirm purchase and total
                 var totalPrice = chosenItem.price * watchesOrdered;
                 console.log ("your order has gone through successfully" );
                 console.log ("your total is : $"+ totalPrice);
-
-                connection.query("SELECT * FROM products", function(err, res) {
-                    if (err) throw err;
-                    for (var i = 0; i < res.length; i++) {
-                        console.log ("ID: " + res[i].item_id + ", Name: " + res[i].product_name + ", remaing: " + res[i].stock_quantity)
-                    }
-                })
-                start();
-                
+                // back to main menu
+                start();               
             }
             else {
-                // bid wasn't high enough, so apologize and start over
+                // if items not in inventory
                 console.log("Insufficient quantity!");
                 start();
             }

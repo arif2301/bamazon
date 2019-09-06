@@ -1,15 +1,10 @@
+-- sql commands to create database of inventory of watches available for purchase
+
 DROP DATABASE IF EXISTS bamazonDB;
 CREATE DATABASE bamazonDB;
 
 USE bamazonDB;
 
--- Then create a Table inside of that database called products.
--- The products table should have each of the following columns:
--- item_id (unique id for each product)
--- product_name (Name of product)
--- department_name
--- price (cost to customer)
--- stock_quantity (how much of the product is available in stores)
 
 CREATE TABLE products(
   item_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,

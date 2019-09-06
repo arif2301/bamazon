@@ -17,6 +17,8 @@
   },
   "homepage": "https://github.com/arif2301/bamazon#readme",
   "dependencies": {
+    "dotenv": "^8.1.0",
+    "fs": "0.0.1-security",
     "inquirer": "^7.0.0",
     "mysql": "^2.17.1"
   }
